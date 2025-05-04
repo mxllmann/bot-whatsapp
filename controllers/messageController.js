@@ -7,6 +7,8 @@ import { handleCommandAutenticar } from './commands/autenticar.js';
 import { handleCommandCriar } from './commands/criar.js';
 import { handleCommandCancelar, estadoCancelamento } from './commands/cancelar.js';
 import { handleCommandEditar, estadoEdicao } from './commands/editar.js'; // 👈 importando o estado
+import { handleCommandConfigurarGPT, estadoConfiguracao } from './commands/configurargpt.js';
+
 
 export async function handleMessage(msg, client) {
   if (!msg.body || typeof msg.body !== 'string' || msg.from.endsWith('@g.us')) return;
@@ -46,6 +48,10 @@ export async function handleMessage(msg, client) {
     return await handleCommandCancelar(text, phone, client, gptContext);
   }  
 
+  if (estadoConfiguracao[phone]) {
+    return await handleCommandConfigurarGPT(text, phone, client);
+  }  
+
   // ✅ Comandos reconhecidos
   if (text.startsWith('/eventos')) {
     const prompt = text.replace('/eventos', '').trim();
@@ -65,6 +71,11 @@ export async function handleMessage(msg, client) {
   if (text.startsWith('/cancelar')) {
     const prompt = text.replace('/cancelar', '').trim();
     return await handleCommandCancelar(prompt, phone, client, gptContext);
+  }  
+
+  if (text.startsWith('/configurargpt')) {
+    estadoConfiguracao[phone] = true;
+    return client.sendMessage(phone, '🧠 Envie agora a forma como deseja ser tratado pelo assistente. Você pode incluir tom, estilo, descrição do seu trabalho etc. \nQuanto mais detalhado você for, melhor!');
   }  
 
   if (text.startsWith('/autenticar')) {
