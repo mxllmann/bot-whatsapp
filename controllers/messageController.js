@@ -1,5 +1,5 @@
 import User from '../models/User.js';
-
+import InteractionLog from '../models/InteractionLog.js';
 import { decrypt } from '../utils/cryptoUtils.js';
 import { hashPhone } from '../utils/hashUtils.js';
 import { handleCommandEventos } from './commands/eventos.js';
@@ -9,8 +9,8 @@ import { handleCommandCancelar, estadoCancelamento } from './commands/cancelar.j
 import { handleCommandEditar, estadoEdicao } from './commands/editar.js'; // 👈 importando o estado
 import { handleCommandConfigurarGPT, estadoConfiguracao } from './commands/configurargpt.js';
 
-
 export async function handleMessage(msg, client) {
+  
   if (!msg.body || typeof msg.body !== 'string' || msg.from.endsWith('@g.us')) return;
 
   const phone = msg.from;
@@ -64,11 +64,13 @@ export async function handleMessage(msg, client) {
   }
 
   if (text.startsWith('/editar')) {
+    estadoEdicao[phone] = true;
     const prompt = text.replace('/editar', '').trim();
     return await handleCommandEditar(prompt, phone, client, gptContext);
   }
 
   if (text.startsWith('/cancelar')) {
+    estadoCancelamento[phone] = true
     const prompt = text.replace('/cancelar', '').trim();
     return await handleCommandCancelar(prompt, phone, client, gptContext);
   }  

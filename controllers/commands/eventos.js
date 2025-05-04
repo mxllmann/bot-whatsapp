@@ -1,11 +1,13 @@
 import openai from '../../services/openaiServices.js';
 import fetch from 'node-fetch';
+import { hashPhone } from '../../utils/hashUtils.js';
+import InteractionLog from '../../models/InteractionLog.js';
 
 export async function handleCommandEventos(prompt, phone, client, gptContext) {
   console.log('📥 Comando /eventos recebido:', prompt);
 
-  // Define a data de hoje no contexto do ChatGPT
   const hoje = new Date().toISOString().slice(0, 10);
+  const phoneHash = hashPhone(phone);
 
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -36,7 +38,17 @@ export async function handleCommandEventos(prompt, phone, client, gptContext) {
     end = parsed.end;
     if (!start || !end) throw new Error();
   } catch (err) {
-    return client.sendMessage(phone, '❌ Não consegui entender o período solicitado.');
+    const resposta = '❌ Não consegui entender o período solicitado.';
+    await client.sendMessage(phone, resposta);
+    await InteractionLog.create({
+      phone_hash: phoneHash,
+      user_message: prompt,
+      bot_response: resposta,
+      command: '/eventos',
+      user_prompt: prompt,
+      gpt_completion: gptResponse
+    });
+    return;
   }
 
   const url = `${process.env.API_BASE_URL}/eventos?phone=${phone}&start=${start}&end=${end}`;
@@ -49,7 +61,17 @@ export async function handleCommandEventos(prompt, phone, client, gptContext) {
     console.log('📦 Eventos recebidos da API:', eventos.length);
 
     if (!eventos.length) {
-      return client.sendMessage(phone, `📭 Nenhum evento encontrado entre ${start} e ${end}.`);
+      const resposta = `📭 Nenhum evento encontrado entre ${start} e ${end}.`;
+      await client.sendMessage(phone, resposta);
+      await InteractionLog.create({
+        phone_hash: phoneHash,
+        user_message: prompt,
+        bot_response: resposta,
+        command: '/eventos',
+        user_prompt: prompt,
+        events_founded: []
+      });
+      return;
     }
 
     const listagem = eventos.map(ev => {
@@ -74,10 +96,25 @@ export async function handleCommandEventos(prompt, phone, client, gptContext) {
       ]
     });
 
-    return client.sendMessage(phone, msgFinal.choices[0].message.content.trim());
-
+    const respostaFinal = msgFinal.choices[0].message.content.trim();
+    await client.sendMessage(phone, respostaFinal);
+    await InteractionLog.create({
+      phone_hash: phoneHash,
+      command: '/eventos',
+      user_message: prompt,
+      events_founded: eventos,
+      gpt_completion: respostaFinal
+    });
   } catch (err) {
     console.error('❌ Erro na busca de eventos:', err);
-    return client.sendMessage(phone, '❌ Ocorreu um erro ao buscar seus eventos.');
+    const resposta = '❌ Ocorreu um erro ao buscar seus eventos.';
+    await client.sendMessage(phone, resposta);
+    await InteractionLog.create({
+      phone_hash: phoneHash,
+      user_message: prompt,
+      bot_response: resposta,
+      command: '/eventos',
+      user_prompt: prompt
+    });
   }
 }
