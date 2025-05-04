@@ -1,7 +1,7 @@
 import openai from '../../services/openaiServices.js';
 import fetch from 'node-fetch';
 
-export async function handleCommandCriar(prompt, phone, client) {
+export async function handleCommandCriar(prompt, phone, client, gptContext) {
   console.log('📥 Comando /criar recebido:', prompt);
 
   const completion = await openai.chat.completions.create({
@@ -74,8 +74,12 @@ export async function handleCommandCriar(prompt, phone, client) {
     messages: [
       {
         role: 'system',
-        content: `Você é um assistente simpático que confirma a criação de eventos. 
-                   Se houver um link do Google Meet, mencione-o. Caso contrário, não fale nada sobre isso.`
+        content: ` 
+        Você é um assistente pessoal que deve seguir o estilo e o tom definidos pelo usuário neste contexto:
+         """${gptContext}"""
+        Siga esse estilo de forma rigorosa em todas as interações com este usuário.
+        Você é um assistente simpático que confirma a criação de eventos. 
+        Se houver um link do Google Meet, mencione-o. Caso contrário, não fale nada sobre isso.`
       },
       {
         role: 'user',

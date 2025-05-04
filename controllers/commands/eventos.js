@@ -1,7 +1,7 @@
 import openai from '../../services/openaiServices.js';
 import fetch from 'node-fetch';
 
-export async function handleCommandEventos(prompt, phone, client) {
+export async function handleCommandEventos(prompt, phone, client, gptContext) {
   console.log('📥 Comando /eventos recebido:', prompt);
 
   // Define a data de hoje no contexto do ChatGPT
@@ -64,7 +64,11 @@ export async function handleCommandEventos(prompt, phone, client) {
       messages: [
         {
           role: 'system',
-          content: 'Responda de forma simpática listando os compromissos do usuário para o intervalo de tempo solicitado.',
+          content: `
+              Você é um assistente pessoal que deve seguir o estilo e o tom definidos pelo usuário neste contexto:
+              """${gptContext}"""
+              Siga esse estilo de forma rigorosa em todas as interações com este usuário.
+              Responda de forma simpática listando os compromissos do usuário para o intervalo de tempo solicitado.`,
         },
         { role: 'user', content: listagem }
       ]
