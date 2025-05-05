@@ -7,12 +7,15 @@ export async function saveOrUpdateUser({ phone, email, tokens, gpt_context }) {
   const phoneHash = hashPhone(phone);
   const encryptedPhone = encrypt(phone);
   const encryptedEmail = encrypt(email);
-  const encryptedContext = encrypt(gpt_context || 'Você é um assistente educado e prestativo.');
   const encryptedAccessToken = encrypt(tokens.access_token || '');
   const encryptedRefreshToken = encrypt(tokens.refresh_token);
   const expiryDate = tokens.expiry_date || null;
 
   const existing = await User.findOne({ phone_hash: phoneHash });
+
+  const encryptedContext = encrypt(
+    gpt_context || (existing?.gpt_context ? decrypt(existing.gpt_context) : 'Você é um assistente educado e prestativo.')
+  );
 
   if (existing) {
     existing.email = encryptedEmail;

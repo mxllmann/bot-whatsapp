@@ -45,8 +45,7 @@ export async function handleCommandEventos(prompt, phone, client, gptContext) {
       user_message: prompt,
       bot_response: resposta,
       command: '/eventos',
-      user_prompt: prompt,
-      gpt_completion: gptResponse
+      error: err
     });
     return;
   }
@@ -68,7 +67,6 @@ export async function handleCommandEventos(prompt, phone, client, gptContext) {
         user_message: prompt,
         bot_response: resposta,
         command: '/eventos',
-        user_prompt: prompt,
         events_founded: []
       });
       return;
@@ -103,7 +101,7 @@ export async function handleCommandEventos(prompt, phone, client, gptContext) {
       command: '/eventos',
       user_message: prompt,
       events_founded: eventos,
-      gpt_completion: respostaFinal
+      bot_response: respostaFinal
     });
   } catch (err) {
     console.error('❌ Erro na busca de eventos:', err);
@@ -114,7 +112,7 @@ export async function handleCommandEventos(prompt, phone, client, gptContext) {
       user_message: prompt,
       bot_response: resposta,
       command: '/eventos',
-      user_prompt: prompt
+      error: err
     });
   }
 }

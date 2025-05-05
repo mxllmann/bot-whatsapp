@@ -29,14 +29,58 @@ export async function handleCommandEditar(prompt, phone, client, gptContext) {
       start = result.start;
       end = result.end;
     } catch (err) {
-      return client.sendMessage(phone, '❌ Não entendi o período desejado. Tente: /editar amanhã');
+
+      const completion = await openai.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'system',
+                content: `
+              Você é um assistente pessoal que deve seguir o estilo e o tom definidos pelo usuário neste contexto:
+              """${gptContext}"""
+              Siga esse estilo de forma rigorosa em todas as interações com este usuário.
+              Informe ao usuário que você não conseguiu entender o período dado por ele.
+              `
+              },
+              {
+                role: 'user',
+                content: `Diga ao usuário que você não conseguiu entender o período informado por ele, instrua-o a usar o comando dessa forma:
+                /editar amanhã, /editar segunda-feira, /editar hoje, /editar semana que vem, /editar 15/05 e etc.`
+              }
+            ]
+          });
+        
+          const mensagem = completion.choices[0].message.content.trim();
+      
+          return client.sendMessage(phone, mensagem);
     }
 
     const res = await fetch(`${process.env.API_BASE_URL}/eventos?phone=${phone}&start=${start}&end=${end}`);
     const eventos = await res.json();
 
     if (!eventos.length) {
-      return client.sendMessage(phone, '📭 Nenhum evento encontrado nesse período.');
+      const completionNotFounded = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `
+          Você é um assistente pessoal que deve seguir o estilo e o tom definidos pelo usuário neste contexto:
+          """${gptContext}"""
+          Siga esse estilo de forma rigorosa em todas as interações com este usuário.
+          Informe ao usuário que você não conseguiu achar nenhum evento no período solicitado.
+          `
+          },
+          {
+            role: 'user',
+            content: `Diga ao usuário que você não encontrou nenhum evento do Google Agenda no período solicitado.`
+          }
+        ]
+      });
+    
+      const mensagem = completionNotFounded.choices[0].message.content.trim();
+  
+      return client.sendMessage(phone, mensagem);
     }
 
     // Salvar estado
@@ -46,7 +90,29 @@ export async function handleCommandEditar(prompt, phone, client, gptContext) {
       .map((ev, i) => `*${i + 1}.* ${ev.summary || 'Sem título'} às ${ev.start?.dateTime?.slice(11, 16)}h`)
       .join('\n');
 
-    return client.sendMessage(phone, `Qual evento deseja editar?\n\n${lista}\n\nResponda com o número correspondente.`);
+      const completionFounded = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `
+          Você é um assistente pessoal que deve seguir o estilo e o tom definidos pelo usuário neste contexto:
+          """${gptContext}"""
+          Siga esse estilo de forma rigorosa em todas as interações com este usuário.
+          `
+          },
+          {
+            role: 'user',
+            content: `Pergunte ao usuário de que ele deve escolher numericamente um desses eventos para realizar a edição ${lista}, ele deve mandar somente o número/indíce do evento que você mostrar.
+            Mostre o eventos na mesma ordem, com os mesmo números de ${lista}`
+          }
+        ]
+      });
+    
+      const mensagem = completionFounded.choices[0].message.content.trim();
+  
+      return client.sendMessage(phone, mensagem);  
+    
   }
 
   // ETAPA 2: usuário escolhe o número do evento
@@ -55,7 +121,31 @@ export async function handleCommandEditar(prompt, phone, client, gptContext) {
     const eventos = estadoEdicao[phone].eventos;
 
     if (isNaN(index) || index < 0 || index >= eventos.length) {
-      return client.sendMessage(phone, '❌ Resposta inválida. Envie apenas o número do evento.');
+
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `
+          Você é um assistente pessoal que deve seguir o estilo e o tom definidos pelo usuário neste contexto:
+          """${gptContext}"""
+          Siga esse estilo de forma rigorosa em todas as interações com este usuário.
+          Informe ao usuário que você não conseguiu entender o período dado por ele.
+          Você encontrou esses eventos: ${lista} O usuário mandou uma resposta que não é um dos números dos eventos encontrados para realizar a edição de um deles.
+          `
+          },
+          {
+            role: 'user',
+            content: `Informe ao usuário de que ele mandou um valor inválido e que ele deve mandar o número correspondente ao evento no qual ele quer editar.`
+          }
+        ]
+      });
+    
+      const mensagem = completion.choices[0].message.content.trim();
+  
+      return client.sendMessage(phone, mensagem);
+      
     }
 
     estadoEdicao[phone] = {
@@ -63,7 +153,28 @@ export async function handleCommandEditar(prompt, phone, client, gptContext) {
       evento: eventos[index]
     };
 
-    return client.sendMessage(phone, `✏️ O que você deseja alterar no evento "${eventos[index].summary}"?`);
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: `
+        Você é um assistente pessoal que deve seguir o estilo e o tom definidos pelo usuário neste contexto:
+        """${gptContext}"""
+        Siga esse estilo de forma rigorosa em todas as interações com este usuário.
+        O usuário escolheu editar esse evento "${eventos[index].summary}, você já estava conversando com ele antes, então não diga "oi" ou similares.
+        `
+        },
+        {
+          role: 'user',
+          content: `Pergunte ao usuário o que ele quer editar no evento "${eventos[index].summary}"`
+        }
+      ]
+    });
+  
+    const mensagem = completion.choices[0].message.content.trim();
+
+    return client.sendMessage(phone, mensagem);
   }
 
   // ETAPA 3: usuário descreve as alterações desejadas
@@ -97,7 +208,29 @@ export async function handleCommandEditar(prompt, phone, client, gptContext) {
     try {
       novo = JSON.parse(completion.choices[0].message.content.trim());
     } catch (err) {
-      return client.sendMessage(phone, '❌ Não consegui entender o que você deseja editar.');
+
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `
+          Você é um assistente pessoal que deve seguir o estilo e o tom definidos pelo usuário neste contexto:
+          """${gptContext}"""
+          Siga esse estilo de forma rigorosa em todas as interações com este usuário.
+          Você não conseguiu entender quais as mudanças que o usuário quer realizar no evento do Google Agenda escolhido.
+          `
+          },
+          {
+            role: 'user',
+            content: `Diga ao usuário que você não conseguiu entender as mudanças que o usuário quer realizar no evento escolhido.`
+          }
+        ]
+      });
+    
+      const mensagem = completion.choices[0].message.content.trim();
+  
+      return client.sendMessage(phone, mensagem);  
     }
 
     // Enviar requisição final
@@ -122,9 +255,53 @@ export async function handleCommandEditar(prompt, phone, client, gptContext) {
     const result = await response.json();
 
     if (result.success) {
-      return client.sendMessage(phone, `✅ Evento "${novo.summary}" atualizado com sucesso!`);
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `
+          Você é um assistente pessoal que deve seguir o estilo e o tom definidos pelo usuário neste contexto:
+          """${gptContext}"""
+          Siga esse estilo de forma rigorosa em todas as interações com este usuário.
+          Informe ao usuário de que as alterações feitas no evento "${novo.summary}" foram atualizadas com sucesso.
+          `
+          },
+          {
+            role: 'user',
+            content: `Informe ao usuário de que as alterações no evento "${novo.summary}" escolhidas por ele foram realizadas com sucesso!`
+          }
+        ]
+      });
+    
+      const mensagem = completion.choices[0].message.content.trim();
+  
+      return client.sendMessage(phone, mensagem);
+
     } else {
-      return client.sendMessage(phone, `❌ Falha ao editar: ${result.message || 'erro desconhecido'}`);
+
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `
+          Você é um assistente pessoal que deve seguir o estilo e o tom definidos pelo usuário neste contexto:
+          """${gptContext}"""
+          Siga esse estilo de forma rigorosa em todas as interações com este usuário.
+          Caso não exista a mensagem ${result.message} diga que foi um erro desconhecido.
+          `
+          },
+          {
+            role: 'user',
+            content: `Informe ao usuário de que não foi possível realizar as alterações no evento "${novo.summary}" pela erro ${result.message}.`
+          }
+        ]
+      });
+    
+      const mensagem = completion.choices[0].message.content.trim();
+  
+      return client.sendMessage(phone, mensagem);
     }
   }
 }
