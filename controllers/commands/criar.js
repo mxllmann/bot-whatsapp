@@ -1,8 +1,12 @@
 import openai from '../../services/openaiServices.js';
 import fetch from 'node-fetch';
+import InteractionLog from '../../models/InteractionLog.js';
+import { hashPhone } from '../../utils/hashUtils.js';
 
 export async function handleCommandCriar(prompt, phone, client, gptContext) {
   console.log('📥 Comando /criar recebido:', prompt);
+
+  const phoneHash  = hashPhone(phone)
 
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -45,7 +49,31 @@ export async function handleCommandCriar(prompt, phone, client, gptContext) {
   try {
     evento = JSON.parse(gptJson);
   } catch (err) {
-    return client.sendMessage(phone, '❌ Não consegui entender como criar esse evento.');
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+          {
+              role: 'system',
+              content: `Você é um assistente pessoal que deve seguir o estilo e o tom definidos pelo usuário neste contexto:
+                      """${gptContext}"""
+                      Siga esse estilo de forma rigorosa em todas as interações com este usuário.
+                      O usuário mandou um comando para você criar um evento para ele no Google Agenda, porém, você não entendeu e não conseguiu criar.`
+          },
+        { role: 'user', content: 'Informe o usuário que você não conseguiu entender a criação desse evento e não conseguiu criá-lo.' }
+      ]
+    });
+
+    const message = completion.choices[0].message.content.trim();
+    
+    await InteractionLog.create({
+          phone_hash: phoneHash,
+          user_message: prompt,
+          bot_response: message,
+          command: '/criar',
+          error: err
+        });
+        return client.sendMessage(phone, message);   
   }
 
   if (prompt.toLowerCase().includes('google meet')) {
@@ -59,8 +87,34 @@ export async function handleCommandCriar(prompt, phone, client, gptContext) {
     body: JSON.stringify({ phone, evento }),
   });
 
+  console.log('Resposta da criação do evento: ', response)
+
   if (!response.ok) {
-    return client.sendMessage(phone, '❌ Houve um erro ao tentar criar o evento.');
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+          {
+              role: 'system',
+              content: `Você é um assistente pessoal que deve seguir o estilo e o tom definidos pelo usuário neste contexto:
+                      """${gptContext}"""
+                      Siga esse estilo de forma rigorosa em todas as interações com este usuário.
+                      O usuário mandou um comando para você criar um evento para ele no Google Agenda, porém, aconteceu algum erro técnico na hora de criar o evento.`
+          },
+        { role: 'user', content: 'Informe o usuário que você não criar esse evento devido a uma falha técnica.' }
+      ]
+    });
+
+    const message = completion.choices[0].message.content.trim();
+    
+    await InteractionLog.create({
+          phone_hash: phoneHash,
+          user_message: prompt,
+          bot_response: message,
+          command: '/criar',
+          error: response
+        });
+        return client.sendMessage(phone, message);
   }
 
   const resultado = await response.json();
@@ -90,7 +144,17 @@ export async function handleCommandCriar(prompt, phone, client, gptContext) {
       }
     ]
   });
+
+  const message = confirmacao.choices[0].message.content.trim()
+
+  await InteractionLog.create({
+    phone_hash: phoneHash,
+    user_message: prompt,
+    bot_response: message,
+    command: '/criar',
+    new_event: resultado
+  });
   
 
-  return client.sendMessage(phone, confirmacao.choices[0].message.content.trim());
+  return client.sendMessage(phone, message );
 }

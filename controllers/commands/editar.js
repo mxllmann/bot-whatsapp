@@ -87,7 +87,7 @@ export async function handleCommandEditar(prompt, phone, client, gptContext) {
     estadoEdicao[phone] = { etapa: 'aguardando_escolha', eventos };
 
     const lista = eventos
-      .map((ev, i) => `*${i + 1}.* ${ev.summary || 'Sem título'} às ${ev.start?.dateTime?.slice(11, 16)}h`)
+      .map((ev, i) => `*${i + 1}.* ${ev.summary || 'Sem título'} das ${ev.start?.dateTime?.slice(11, 16)}h até ás ${ev.end?.dateTime?.slice(11, 16)} `)
       .join('\n');
 
       const completionFounded = await openai.chat.completions.create({
@@ -132,7 +132,8 @@ export async function handleCommandEditar(prompt, phone, client, gptContext) {
           """${gptContext}"""
           Siga esse estilo de forma rigorosa em todas as interações com este usuário.
           Informe ao usuário que você não conseguiu entender o período dado por ele.
-          Você encontrou esses eventos: ${lista} O usuário mandou uma resposta que não é um dos números dos eventos encontrados para realizar a edição de um deles.
+          Você encontrou alguns eventos do Google Agenda do usuário e informou para ele de forma ordenada esperando que ele respondesse o
+          número equivalente ao evento, porém o usuário mandou uma resposta que não é um dos números dos eventos encontrados para realizar a edição de um deles.
           `
           },
           {
