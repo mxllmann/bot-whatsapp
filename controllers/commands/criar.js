@@ -71,7 +71,8 @@ export async function handleCommandCriar(prompt, phone, client, gptContext) {
           user_message: prompt,
           bot_response: message,
           command: '/criar',
-          error: err
+          error: err,
+          success: false
         });
         return client.sendMessage(phone, message);   
   }
@@ -112,7 +113,8 @@ export async function handleCommandCriar(prompt, phone, client, gptContext) {
           user_message: prompt,
           bot_response: message,
           command: '/criar',
-          error: response
+          error: response,
+          success: false
         });
         return client.sendMessage(phone, message);
   }
@@ -152,7 +154,8 @@ export async function handleCommandCriar(prompt, phone, client, gptContext) {
     user_message: prompt,
     bot_response: message,
     command: '/criar',
-    new_event: resultado
+    new_event: resultado,
+    success: true
   });
   
 

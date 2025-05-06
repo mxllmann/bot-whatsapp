@@ -3,6 +3,7 @@ import User from '../../models/User.js';
 import openai from '../../services/openaiServices.js';
 import { encrypt } from '../../utils/cryptoUtils.js';
 import { hashPhone } from '../../utils/hashUtils.js';
+import InteractionLog from '../../models/InteractionLog.js';
 
 export const estadoConfiguracao = {}; // { [phone]: true }
 
@@ -33,6 +34,14 @@ export async function handleCommandConfigurarGPT(text, phone, client) {
   
     const mensagem = completion.choices[0].message.content.trim();
 
+    await InteractionLog.create({
+              phone_hash: phoneHash,
+              user_message: encrypt(text),
+              bot_response: mensagem,
+              command: '/configurargpt',
+              success: false
+            });
+
     return client.sendMessage(phone, mensagem);
   }
 
@@ -60,6 +69,14 @@ export async function handleCommandConfigurarGPT(text, phone, client) {
         });
       
     const mensagem = completion.choices[0].message.content.trim();
+
+    await InteractionLog.create({
+      phone_hash: phoneHash,
+      bot_response: mensagem,
+      new_gpt_context: user.gpt_context,
+      command: '/configurargpt',
+      success: true
+    });
     
     return client.sendMessage(phone, mensagem);
     
@@ -87,6 +104,14 @@ export async function handleCommandConfigurarGPT(text, phone, client) {
         });
       
         const mensagem = completion.choices[0].message.content.trim();
+
+        await InteractionLog.create({
+          phone_hash: phoneHash,
+          user_message: encrypt(text),
+          bot_response: mensagem,
+          command: '/configurargpt',
+          success: false
+        });
     
         return client.sendMessage(phone, mensagem);
   }

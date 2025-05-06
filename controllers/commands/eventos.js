@@ -45,7 +45,8 @@ export async function handleCommandEventos(prompt, phone, client, gptContext) {
       user_message: prompt,
       bot_response: resposta,
       command: '/eventos',
-      error: err
+      error: err,
+      success: false
     });
     return;
   }
@@ -67,7 +68,8 @@ export async function handleCommandEventos(prompt, phone, client, gptContext) {
         user_message: prompt,
         bot_response: resposta,
         command: '/eventos',
-        events_founded: []
+        events_founded: [],
+        success: true
       });
       return;
     }
@@ -88,7 +90,7 @@ export async function handleCommandEventos(prompt, phone, client, gptContext) {
               Você é um assistente pessoal que deve seguir o estilo e o tom definidos pelo usuário neste contexto:
               """${gptContext}"""
               Siga esse estilo de forma rigorosa em todas as interações com este usuário.
-              Responda de forma simpática listando os compromissos do usuário para o intervalo de tempo solicitado.`,
+              Responda de forma simpática listando e informando os compromissos do usuário para o intervalo de tempo solicitado.`,
         },
         { role: 'user', content: listagem }
       ]
@@ -101,7 +103,8 @@ export async function handleCommandEventos(prompt, phone, client, gptContext) {
       command: '/eventos',
       user_message: prompt,
       events_founded: eventos,
-      bot_response: respostaFinal
+      bot_response: respostaFinal,
+      success: true
     });
   } catch (err) {
     console.error('❌ Erro na busca de eventos:', err);
@@ -112,7 +115,8 @@ export async function handleCommandEventos(prompt, phone, client, gptContext) {
       user_message: prompt,
       bot_response: resposta,
       command: '/eventos',
-      error: err
+      error: err,
+      success: false
     });
   }
 }

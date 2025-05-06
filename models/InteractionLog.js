@@ -12,7 +12,9 @@ const logSchema = new mongoose.Schema({
   user_choice: { type: String },
   user_changes: { type: mongoose.Schema.Types.Mixed },
   new_event: { type: mongoose.Schema.Types.Mixed },
-  error: { type: mongoose.Schema.Types.Mixed }
+  new_gpt_context: { type: String },
+  error: { type: mongoose.Schema.Types.Mixed },
+  success: {type: Boolean}
 });
 
 const InteractionLog = mongoose.model('InteractionLog', logSchema, 'interactionLog');

@@ -5,6 +5,7 @@ const estadoEdicao = {}; // { [phone]: { etapa: '...', evento: {...} } }
 
 export async function handleCommandEditar(prompt, phone, client, gptContext) {
   const hoje = new Date().toISOString().slice(0, 10);
+  
 
   // ETAPA 1: usuário envia "/editar amanhã"
   if (!estadoEdicao[phone]) {
