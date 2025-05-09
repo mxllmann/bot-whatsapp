@@ -7,7 +7,7 @@ import InteractionLog from '../../models/InteractionLog.js';
 
 export const estadoConfiguracao = {}; // { [phone]: true }
 
-export async function handleCommandConfigurarGPT(text, phone, client) {
+export async function handleCommandConfigurarGPT(text, phone, client, gptContext) {
   const phoneHash = hashPhone(phone);
   const user = await User.findOne({ phone_hash: phoneHash });
 

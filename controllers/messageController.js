@@ -142,8 +142,9 @@ export async function handleMessage(msg, client) {
     });
   
     const mensagem = completion.choices[0].message.content.trim();
-
-    return client.sendMessage(phone, mensagem);
+    
+    return await client.sendMessage(phone, mensagem)
+    
   }
 
   const completion = await openai.chat.completions.create({

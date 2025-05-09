@@ -4,7 +4,7 @@ import mongoose from '../config/db.js';
 const logSchema = new mongoose.Schema({
   phone_hash: { type: String, required: true },
   timestamp: { type: Date, default: Date.now },
-  user_message: { type: String, required: true },
+  user_message: { type: String },
   command: { type: String },
   user_prompt: { type: String },
   events_founded: { type: mongoose.Schema.Types.Mixed },
