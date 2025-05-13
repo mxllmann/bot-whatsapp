@@ -1,0 +1,31 @@
+# Dependências (serão instaladas no container via npm install)
+node_modules
+
+# Arquivos de configuração do sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+*.log
+
+# Ambientes
+.env
+
+# Diretórios de build/temporários
+dist
+build
+.tmp
+.cache
+
+# Sessão do WhatsApp (não queremos ela no build, apenas montada como volume)
+.wwebjs_auth
+.wwebjs_cache
+
+# Mongo volume local (não precisa ir pro container)
+mongo-data
+
+.git
+.gitignore

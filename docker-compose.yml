@@ -1,0 +1,37 @@
+
+services:
+  app:
+    build: .
+    container_name: app
+    restart: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - ./wwebjs_auth:/app/.wwebjs_auth
+      - ./wwebjs_cache:/app/.wwebjs_cache
+    env_file:
+      - .env
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:5
+    container_name: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./mongo-data:/data/db
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: ngrok
+    restart: always
+    command: http --authtoken=${NGROK_AUTH} host.docker.internal:3000
+    ports:
+      - "4040:4040"
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTH}
+
+
