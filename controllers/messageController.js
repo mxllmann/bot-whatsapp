@@ -2,7 +2,7 @@ import User from '../models/User.js';
 import InteractionLog from '../models/InteractionLog.js';
 import openai from '../services/openaiServices.js';
 import { decrypt } from '../utils/cryptoUtils.js';
-import { hashPhone } from '../utils/hashUtils.js';
+import { hash } from '../utils/hashUtils.js';
 import { handleCommandEventos } from './commands/eventos.js';
 import { handleCommandAutenticar } from './commands/autenticar.js';
 import { handleCommandCriar } from './commands/criar.js';
@@ -14,7 +14,7 @@ export async function handleMessage(msg, client) {
   if (!msg.body || typeof msg.body !== 'string' || msg.from.endsWith('@g.us')) return;
 
   const phone = msg.from;
-  const phoneHash = hashPhone(phone);
+  const phoneHash = hash(phone);
   const text = msg.body.trim();
 
   console.log('📨 Comando identificado:', text);
@@ -68,7 +68,7 @@ export async function handleMessage(msg, client) {
         return client.sendMessage(phone, mensagem);
       } catch {
         // Token inválido ou expirado, solicitar nova autenticação
-        return await handleCommandAutenticar(phone, client, gptContext);
+        return await handleCommandAutenticar(phone, client);
       }
     } else {
       // Usuário ainda não autenticado

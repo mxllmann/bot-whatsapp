@@ -1,10 +1,10 @@
 // controllers/saveUser.js
 import User from '../models/User.js';
 import { encrypt, decrypt } from '../utils/cryptoUtils.js';
-import { hashPhone } from '../utils/hashUtils.js';
+import { hash } from '../utils/hashUtils.js';
 
 export async function saveOrUpdateUser({ phone, email, tokens, gpt_context }) {
-  const phoneHash = hashPhone(phone);
+  const phoneHash = hash(phone);
   const encryptedPhone = encrypt(phone);
   const encryptedEmail = encrypt(email);
   const encryptedAccessToken = encrypt(tokens.access_token || '');

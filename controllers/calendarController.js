@@ -2,14 +2,20 @@ import { oAuth2Client } from '../services/googleService.js';
 import { google } from 'googleapis';
 import User from '../models/User.js';
 import { decrypt } from '../utils/cryptoUtils.js';
-import { hashPhone } from '../utils/hashUtils.js';
+import { hash } from '../utils/hashUtils.js';
+
+function gerarCorAleatoria() {
+  const coresDisponiveis = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+  const indice = Math.floor(Math.random() * coresDisponiveis.length);
+  return coresDisponiveis[indice].toString();
+}
 
 export const buscarEventosPorData = async (req, res) => {
   try {
     const { phone, start, end } = req.query;
     if (!phone || !start || !end) return res.status(400).send('Parâmetros ausentes');
 
-    const phoneHash = hashPhone(phone);
+    const phoneHash = hash(phone);
     const user = await User.findOne({ phone_hash: phoneHash });
 
     if (!user || !user.refresh_token) return res.status(403).send('Usuário não autenticado');
@@ -41,7 +47,7 @@ export const criarEvento = async (req, res) => {
     const { phone, evento } = req.body;
     if (!phone || !evento) return res.status(400).send('Parâmetros ausentes');
 
-    const phoneHash = hashPhone(phone);
+    const phoneHash = hash(phone);
     const user = await User.findOne({ phone_hash: phoneHash });
 
     if (!user || !user.refresh_token) return res.status(403).send('Usuário não autenticado');
@@ -67,6 +73,7 @@ export const criarEvento = async (req, res) => {
       attendees: evento.attendees?.map(email => ({ email })),
       recurrence: evento.recurrence,
       reminders: evento.reminders,
+      colorId: evento.colorId || gerarCorAleatoria(),
     };
 
     if (evento.conference) {
@@ -102,7 +109,7 @@ export async function editarEvento(req, res) {
     if (!original?.summary || !original?.periodo?.start || !original?.periodo?.end)
       return res.status(400).json({ success: false, message: 'Campos obrigatórios ausentes' });
 
-    const phoneHash = hashPhone(phone);
+    const phoneHash = hash(phone);
     const user = await User.findOne({ phone_hash: phoneHash });
 
     if (!user || !user.refresh_token)
@@ -160,7 +167,7 @@ export async function editarEvento(req, res) {
 export async function deletarEvento(req, res) {
   try {
     const { phone, eventId } = req.body;
-    const phoneHash = hashPhone(phone);
+    const phoneHash = hash(phone);
     const user = await User.findOne({ phone_hash: phoneHash });
 
     if (!user || !user.refresh_token)

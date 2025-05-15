@@ -1,13 +1,13 @@
 import openai from '../../services/openaiServices.js';
 import fetch from 'node-fetch';
-import { hashPhone } from '../../utils/hashUtils.js';
+import { hash } from '../../utils/hashUtils.js';
 import InteractionLog from '../../models/InteractionLog.js';
 
 export async function handleCommandEventos(prompt, phone, client, gptContext) {
   console.log('📥 Comando /eventos recebido:', prompt);
 
   const hoje = new Date().toISOString().slice(0, 10);
-  const phoneHash = hashPhone(phone);
+  const phoneHash = hash(phone);
 
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',

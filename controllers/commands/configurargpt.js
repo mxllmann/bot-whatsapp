@@ -2,13 +2,13 @@
 import User from '../../models/User.js';
 import openai from '../../services/openaiServices.js';
 import { encrypt } from '../../utils/cryptoUtils.js';
-import { hashPhone } from '../../utils/hashUtils.js';
+import { hash } from '../../utils/hashUtils.js';
 import InteractionLog from '../../models/InteractionLog.js';
 
 export const estadoConfiguracao = {}; // { [phone]: true }
 
 export async function handleCommandConfigurarGPT(text, phone, client, gptContext) {
-  const phoneHash = hashPhone(phone);
+  const phoneHash = hash(phone);
   const user = await User.findOne({ phone_hash: phoneHash });
 
   if (!user) {
